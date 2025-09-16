@@ -55,10 +55,29 @@ class Personagem:
             obj.classe = choice(listaclasses)
         obj.nvl = nvl
 
+        obj.atrs = {
+            "FOR": 10,
+            "DES": 10,
+            "CON": 10,
+            "INT": 10,
+            "SAB": 10,
+            "CON": 10
+        }
+
         obj.caracs = []
         obj.ataques = []
-        obj.inventorio = []
+        obj.inventario = []
         obj.fraq, obj.resists, obj.imunis = [], [], []
+
+    def setAtrs(obj, f, d, con, i, s, car):
+        obj.atrs = {
+            "FOR": f,
+            "DES": d,
+            "CON": con,
+            "INT": i,
+            "SAB":s,
+            "CAR": car
+        }
 
 class Item:
     def __init__(obj, nome, desc):
@@ -66,7 +85,14 @@ class Item:
         obj.desc = desc
     
     def adiItem(obj, perso):
-        perso.inventorio.append(obj)
+        perso.inventario.append(obj)
+    
+    def perdeItem(obj, perso):
+        i = encontraObj(obj, perso.inventario)
+        if i != "Não":
+            del perso.inventario[i]
+        else:
+            print("Esse personagem não tem este item")
 
 class Arma(Item):
     def __init__(obj, nome, desc, dano, tipo):
@@ -77,6 +103,14 @@ class Arma(Item):
         super().adiItem(perso)
         espaco = obj.dano.index(" ")
         perso.ataques.append(Ataque(obj.nome, obj.dano[:espaco], obj.dano[(espaco+1):]))
+    
+    def perdeItem(obj, perso):
+        super().perdeItem(perso)
+        i = encontraObj(obj, perso.ataques)
+        if i != "Não":
+            del perso.ataques[i]
+        else:
+            print("O personagem não tem o ataque dessa arma")
 
 class Ataque:
     def __init__(obj, nome, dano, tipo, bonusbase=0):
@@ -97,16 +131,54 @@ class Ataque:
         else: obj.dado = int(dano[(d+1):])
         if b: obj.bonus = int(dano[(b+1):])
     
+    def adiAtaque(obj, perso):
+        perso.ataques.append(obj)
+
+    def perdeAtaque(obj, perso):
+        i = encontraObj(obj, perso.ataques)
+        if i != "Não":
+            del perso.ataques[i]
+        else:
+            print("Esse personagem não tem este ataque")
+
     def __str__(obj):
         if obj.bonus > 0: bon = '+'+str(obj.bonus)
         else: bon = ''
         return f"O ataque '{obj.nome}' dá {obj.qtdado}d{obj.dado}{bon} de dano {obj.tipo}"
 
 class Caracteristica:
-    def __init__(obj):
-        pass
+    def __init__(obj, nome, desc):
+        obj.nome = nome
+        obj.desc = desc
+
+    def adiCarac(obj, perso):
+        perso.caracs.append(obj)
+    
+    def perdeCarac(obj, perso):
+        perso.caracs
+    
+    def __str__(obj):
+        return f"Essa Carcterística não tem efeitos mecânicos"
+
+class LinguaDeVeludo(Caracteristica):
+    def __init__(obj)
+        super().__init__("Língua de Veludo", "O personagem é um safado")
+
+
+def encontraObj(elemento, lista):
+    index = "Não"
+
+    for e in range(len(lista)):
+        if lista[e].nome == elemento.nome:
+            index = e
+            break
+
+    return index
 
 link = Personagem("Link", "Elfo", "Guerreiro", 15)
 Arma("Espada maneira", "Uma espada muito maneira", "1d12+3", "Cortante").adiItem(link)
+Item("Poção de vida", "Uma poção que faz alguma coisa").adiItem(link)
 
-print(link.ataques[0].tipo)
+print([x.nome for x in link.inventario], [x.nome for x in link.ataques])
+Arma("Espada maneira", "Uma espada muito maneira", "1d12+3", "Cortante").perdeItem(link)
+print([x.nome for x in link.inventario], [x.nome for x in link.ataques])
