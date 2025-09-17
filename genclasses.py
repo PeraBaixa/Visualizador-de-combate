@@ -1,5 +1,8 @@
 from random import choice
 
+listaAtaques = []
+cods = 0
+
 listatipos = [
     "concussivo",
     "cortante",
@@ -42,19 +45,12 @@ listaclasses = [
     "Patrulheiro"
 ]
 
-class Personagem:
-    def __init__(obj, nome, raca, classe, nvl):
+class Criatura:
+    def __init__(obj, nome):
         obj.nome = nome
-        if raca in listaraca:
-            obj.raca = raca
-        else:
-            obj.raca = choice(listaraca)
-        if classe in listaclasses:
-            obj.classe = classe
-        else:
-            obj.classe = choice(listaclasses)
-        obj.nvl = nvl
-
+        obj.vidamax = 0
+        obj.vida = [0,0] #pontos de vida atuais/pontos de vida temporários
+        obj.armadura = 10
         obj.atrs = {
             "FOR": 10,
             "DES": 10,
@@ -63,6 +59,8 @@ class Personagem:
             "SAB": 10,
             "CON": 10
         }
+        obj.cod = 0
+        obj.ataqTur = 1
 
         obj.caracs = []
         obj.ataques = []
@@ -78,6 +76,54 @@ class Personagem:
             "SAB":s,
             "CAR": car
         }
+
+        obj.armadura += obj.atrs['DES']
+
+class Personagem(Criatura):
+    def __init__(obj, nome, raca, classe, nvl):
+        super().__init__(nome)
+        if raca in listaraca:
+            obj.raca = raca
+        else:
+            obj.raca = choice(listaraca)
+        obj.classe = classe
+        obj.adiClasse()
+        obj.nvl = nvl
+        obj.adiClasse()
+        cods+=1
+        obj.cod = cods
+        Ataque("Ataque Desarmado", "1d4", "Concussivo", "FOR").adiAtaque(obj)
+
+    def adiClasse(obj):
+        match obj.classe:
+            case "Barbáro":
+                obj.vidamax = 10
+            case "Bardo":
+                pass
+            case "Bruxo":
+                pass
+            case "Clérigo":
+                pass
+            case "Druida":
+                pass
+            case "Feiticeiro":
+                pass
+            case "Guerreiro":
+                pass
+            case "Ladino":
+                pass
+            case "Mago":
+                pass
+            case "Monge":
+                pass
+            case "Paladino":
+                pass
+            case "Patrulheiro":
+                pass
+            case __:
+                obj.classe = choice(listaclasses)
+                print(F"A classe de {obj.nome} se tornou '{obj.classe}'")
+                obj.adiClasse()
 
 class Item:
     def __init__(obj, nome, desc):
@@ -113,13 +159,16 @@ class Arma(Item):
             print("O personagem não tem o ataque dessa arma")
 
 class Ataque:
-    def __init__(obj, nome, dano, tipo, bonusbase=0):
+    def __init__(obj, nome, dano, tipo, atrbon="", bonusbase=0):
         obj.nome = nome
         obj.qtdado, obj.dado, obj.bonus = 0, 0, 0
         obj.tipo = "concussivo"
         if tipo in listatipos: obj.tipo = tipo.lower()
         obj.iniciaDano(dano.lower())
         obj.bonusbase = bonusbase
+        obj.atrbon = atrbon
+        obj.perso = None
+        listaAtaques.append(obj)
 
     def iniciaDano(obj, dano):
         d = dano.index('d')
@@ -132,8 +181,10 @@ class Ataque:
         if b: obj.bonus = int(dano[(b+1):])
     
     def adiAtaque(obj, perso):
-        perso.ataques.append(obj)
+        obj.perso = perso.cod
+        perso.ataques.append(obj.nome)
 
+    #MUDARRRRRRRRRRRRRRRRRRR
     def perdeAtaque(obj, perso):
         i = encontraObj(obj, perso.ataques)
         if i != "Não":
@@ -142,7 +193,7 @@ class Ataque:
             print("Esse personagem não tem este ataque")
 
     def __str__(obj):
-        if obj.bonus > 0: bon = '+'+str(obj.bonus)
+        if obj.bonus > 0: bon = '+'+str(obj.bonus)+'atrbon'
         else: bon = ''
         return f"O ataque '{obj.nome}' dá {obj.qtdado}d{obj.dado}{bon} de dano {obj.tipo}"
 
@@ -161,7 +212,7 @@ class Caracteristica:
         return f"Essa Carcterística não tem efeitos mecânicos"
 
 class LinguaDeVeludo(Caracteristica):
-    def __init__(obj)
+    def __init__(obj):
         super().__init__("Língua de Veludo", "O personagem é um safado")
 
 
