@@ -1,7 +1,9 @@
 from random import choice
+#Listas importantes
+listaAtaques = criaturas = []
 
-listaAtaques = []
-cods = 0
+#Variáveis globais
+auto = True
 
 listatipos = [
     "concussivo",
@@ -59,7 +61,8 @@ class Criatura:
             "SAB": 10,
             "CON": 10
         }
-        obj.cod = 0
+        persos.append(obj)
+        obj.cod = len(persos)
         obj.ataqTur = 1
 
         obj.caracs = []
@@ -90,11 +93,22 @@ class Personagem(Criatura):
         obj.adiClasse()
         obj.nvl = nvl
         obj.adiClasse()
-        cods+=1
-        obj.cod = cods
+
         Ataque("Ataque Desarmado", "1d4", "Concussivo", "FOR").adiAtaque(obj)
 
     def adiClasse(obj):
+        def calculaVida(vmax):
+            while True:
+                if auto:
+                    for n in (obj.nvl-1):
+                        obj.vidamax+=choice(range(1,vmax+1))
+                        obj.vidamax+=obj.atrs['CON']
+                else:
+                    for n in (obj.nvl-1):
+                        obj.vidamax+=int(input("Insira a vida referente ao nível "+n+": "))
+                        obj.vidamax+=obj.atrs['CON']
+
+
         match obj.classe:
             case "Barbáro":
                 obj.vidamax = 10
@@ -124,6 +138,8 @@ class Personagem(Criatura):
                 obj.classe = choice(listaclasses)
                 print(F"A classe de {obj.nome} se tornou '{obj.classe}'")
                 obj.adiClasse()
+        
+            
 
 class Item:
     def __init__(obj, nome, desc):
@@ -184,11 +200,9 @@ class Ataque:
         obj.perso = perso.cod
         perso.ataques.append(obj.nome)
 
-    #MUDARRRRRRRRRRRRRRRRRRR
     def perdeAtaque(obj, perso):
-        i = encontraObj(obj, perso.ataques)
-        if i != "Não":
-            del perso.ataques[i]
+        if obj.nome in perso.ataques:
+            perso.ataques.remove(obj.nome)
         else:
             print("Esse personagem não tem este ataque")
 
@@ -215,21 +229,21 @@ class LinguaDeVeludo(Caracteristica):
     def __init__(obj):
         super().__init__("Língua de Veludo", "O personagem é um safado")
 
-
-def encontraObj(elemento, lista):
+def encontraObj(cod, lista):
     index = "Não"
 
     for e in range(len(lista)):
-        if lista[e].nome == elemento.nome:
+        if lista[e].nome == cod:
             index = e
             break
 
     return index
 
-link = Personagem("Link", "Elfo", "Guerreiro", 15)
+"""link = Personagem("Link", "Elfo", "Guerreiro", 15)
 Arma("Espada maneira", "Uma espada muito maneira", "1d12+3", "Cortante").adiItem(link)
 Item("Poção de vida", "Uma poção que faz alguma coisa").adiItem(link)
 
 print([x.nome for x in link.inventario], [x.nome for x in link.ataques])
 Arma("Espada maneira", "Uma espada muito maneira", "1d12+3", "Cortante").perdeItem(link)
-print([x.nome for x in link.inventario], [x.nome for x in link.ataques])
+print([x.nome for x in link.inventario], [x.nome for x in link.ataques])"""
+print(fnc(2))
