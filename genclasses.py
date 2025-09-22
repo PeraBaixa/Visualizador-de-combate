@@ -1,6 +1,6 @@
 from random import choice
 #Listas importantes
-listaAtaques, criaturas, itens = [], [], []
+listaAtaques, criaturas, itens, magias = [], [], [], []
 
 #Variáveis globais
 auto = True
@@ -205,23 +205,10 @@ class Ataque:
         else: bon = ''
         return f"O ataque '{obj.nome}' dá {obj.qtdado}d{obj.dado}{bon} de dano {obj.tipo}"
 
-class Caracteristica:
-    def __init__(obj, nome, desc):
+class Magia:
+    def __init__(obj, nome, nvlMin, dist, dano):
         obj.nome = nome
-        obj.desc = desc
-
-    def adiCarac(obj, perso):
-        perso.caracs.append(obj)
-    
-    def perdeCarac(obj, perso):
-        perso.caracs
-    
-    def __str__(obj):
-        return f"Essa Carcterística não tem efeitos mecânicos"
-
-class LinguaDeVeludo(Caracteristica):
-    def __init__(obj):
-        super().__init__("Língua de Veludo", "O personagem é um safado")
+        obj.nvlMin = nvlMin
         
 def retornaObj(cod, lista):
     for e in lista:
