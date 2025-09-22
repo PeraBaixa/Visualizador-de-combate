@@ -1,6 +1,6 @@
 from random import choice
 #Listas importantes
-listaAtaques = criaturas = []
+listaAtaques, criaturas, itens = [], [], []
 
 #Variáveis globais
 auto = True
@@ -61,9 +61,12 @@ class Criatura:
             "SAB": 10,
             "CON": 10
         }
-        persos.append(obj)
-        obj.cod = len(persos)
-        obj.ataqTur = 1
+        
+        criaturas.append(obj)
+        obj.cod = len(criaturas)
+        obj.acaoPri, obj.atqAcao = 1, 1
+        
+        obj.estadoCri = []
 
         obj.caracs = []
         obj.ataques = []
@@ -81,101 +84,80 @@ class Criatura:
         }
 
         obj.armadura += obj.atrs['DES']
-
+        
+    def getBon(obj, atr):
+        if atr != "":
+            return ((obj.atrs[atr.upper()])-10)//2
+        else:
+            return 0
+    
+    def __str__(obj):
+        return f"Criatura de nome {obj.nome}"
+    
 class Personagem(Criatura):
-    def __init__(obj, nome, raca, classe, nvl):
+    def __init__(obj, nome, raca, classe, nvl=1):
         super().__init__(nome)
-        if raca in listaraca:
-            obj.raca = raca
+        obj.nvl = nvl
+        if raca.lower() in listaraca:
+            obj.raca = raca.lower()
         else:
             obj.raca = choice(listaraca)
-        obj.classe = classe
-        obj.adiClasse()
-        obj.nvl = nvl
-        obj.adiClasse()
+        obj.classe = classe.lower().capitalize()
 
-        Ataque("Ataque Desarmado", "1d4", "Concussivo", "FOR").adiAtaque(obj)
+        obj.estado = "normal"
 
-    def adiClasse(obj):
-        def calculaVida(vmax):
-            while True:
-                if auto:
-                    for n in (obj.nvl-1):
-                        obj.vidamax+=choice(range(1,vmax+1))
-                        obj.vidamax+=obj.atrs['CON']
-                else:
-                    for n in (obj.nvl-1):
-                        obj.vidamax+=int(input("Insira a vida referente ao nível "+n+": "))
-                        obj.vidamax+=obj.atrs['CON']
-
-
-        match obj.classe:
-            case "Barbáro":
-                obj.vidamax = 10
-            case "Bardo":
-                pass
-            case "Bruxo":
-                pass
-            case "Clérigo":
-                pass
-            case "Druida":
-                pass
-            case "Feiticeiro":
-                pass
-            case "Guerreiro":
-                pass
-            case "Ladino":
-                pass
-            case "Mago":
-                pass
-            case "Monge":
-                pass
-            case "Paladino":
-                pass
-            case "Patrulheiro":
-                pass
-            case __:
-                obj.classe = choice(listaclasses)
-                print(F"A classe de {obj.nome} se tornou '{obj.classe}'")
-                obj.adiClasse()
-        
-            
+        Ataque("Ataque Desarmado", "1d4", "concussivo", "FOR").adiAtaque(obj)
+    
+    def setAtrs(obj, f, d, con, i, s, car):
+        obj.vidamax += ((con - obj.atrs["CON"])//2)*obj.nvl
+        obj.vida[0] += ((con - obj.atrs["CON"])//2)*obj.nvl
+        super().setAtrs(f, d, con, i, s, car)
 
 class Item:
     def __init__(obj, nome, desc):
         obj.nome = nome
         obj.desc = desc
+        obj.qt = 0
+        obj.perso = None
+        itens.append(obj)
+        obj.cod = len(itens)
     
     def adiItem(obj, perso):
-        perso.inventario.append(obj)
+        obj.qt += 1
+        if obj.qt == 1:
+            perso.inventario.append(obj.cod)
+            obj.perso = perso.cod
     
     def perdeItem(obj, perso):
-        i = encontraObj(obj, perso.inventario)
-        if i != "Não":
-            del perso.inventario[i]
-        else:
-            print("Esse personagem não tem este item")
+        obj.qt -= 1
+        if obj.qt == 0:
+            perso.inventario.remove(obj.cod)
+            obj.perso = None
 
 class Arma(Item):
-    def __init__(obj, nome, desc, dano, tipo):
+    def __init__(obj, nome, desc, dano, tipo, mod=""):
         super().__init__(nome, desc)
         obj.dano = dano.lower() + " " + tipo.lower()
+        bonAt = ""
+        match mod.lower():
+            case "leve":
+               bonAt = "DES"
+            case __:
+                bonAt = "FOR"
+        obj.codatk = Ataque(obj.nome, dano, tipo, bonAt).cod
+
     
     def adiItem(obj, perso):
         super().adiItem(perso)
-        espaco = obj.dano.index(" ")
-        perso.ataques.append(Ataque(obj.nome, obj.dano[:espaco], obj.dano[(espaco+1):]))
+        perso.ataques.append(obj.codatk)
+        retornaObj(obj.codatk, listaAtaques).perso = perso.cod
     
     def perdeItem(obj, perso):
         super().perdeItem(perso)
-        i = encontraObj(obj, perso.ataques)
-        if i != "Não":
-            del perso.ataques[i]
-        else:
-            print("O personagem não tem o ataque dessa arma")
+        perso.ataques.remove(obj.codatk)
 
 class Ataque:
-    def __init__(obj, nome, dano, tipo, atrbon="", bonusbase=0):
+    def __init__(obj, nome, dano, tipo, atrbon="", bonusbase=0, melee=True):
         obj.nome = nome
         obj.qtdado, obj.dado, obj.bonus = 0, 0, 0
         obj.tipo = "concussivo"
@@ -183,8 +165,10 @@ class Ataque:
         obj.iniciaDano(dano.lower())
         obj.bonusbase = bonusbase
         obj.atrbon = atrbon
+        obj.melee = melee
         obj.perso = None
         listaAtaques.append(obj)
+        obj.cod = len(listaAtaques)
 
     def iniciaDano(obj, dano):
         d = dano.index('d')
@@ -198,13 +182,23 @@ class Ataque:
     
     def adiAtaque(obj, perso):
         obj.perso = perso.cod
-        perso.ataques.append(obj.nome)
+        perso.ataques.append(obj.cod)
 
     def perdeAtaque(obj, perso):
-        if obj.nome in perso.ataques:
-            perso.ataques.remove(obj.nome)
+        if obj.cod in perso.ataques:
+            perso.ataques.remove(obj.cod)
         else:
             print("Esse personagem não tem este ataque")
+
+    def getDano(obj):
+        perso = retornaObj(obj.perso, criaturas)
+        b = obj.bonus + perso.getBon(obj.atrbon)
+        if b > 0:
+            b = "+"+str(b)
+        elif b < 0:
+            b = str(b)
+        
+        return f"{obj.qtdado}d{obj.dado}{b if b != 0 else ""}"
 
     def __str__(obj):
         if obj.bonus > 0: bon = '+'+str(obj.bonus)+'atrbon'
@@ -228,22 +222,8 @@ class Caracteristica:
 class LinguaDeVeludo(Caracteristica):
     def __init__(obj):
         super().__init__("Língua de Veludo", "O personagem é um safado")
-
-def encontraObj(cod, lista):
-    index = "Não"
-
-    for e in range(len(lista)):
-        if lista[e].nome == cod:
-            index = e
-            break
-
-    return index
-
-"""link = Personagem("Link", "Elfo", "Guerreiro", 15)
-Arma("Espada maneira", "Uma espada muito maneira", "1d12+3", "Cortante").adiItem(link)
-Item("Poção de vida", "Uma poção que faz alguma coisa").adiItem(link)
-
-print([x.nome for x in link.inventario], [x.nome for x in link.ataques])
-Arma("Espada maneira", "Uma espada muito maneira", "1d12+3", "Cortante").perdeItem(link)
-print([x.nome for x in link.inventario], [x.nome for x in link.ataques])"""
-print(fnc(2))
+        
+def retornaObj(cod, lista):
+    for e in lista:
+        if e.cod == cod:
+            return e
