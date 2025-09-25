@@ -94,6 +94,11 @@ class Criatura:
     def __str__(obj):
         return f"Criatura de nome {obj.nome}"
     
+    def sofrerDano(dano, tipo):
+        if tipo in obj.resists: dano //= 2
+        if tipo in imunis: dano = 0
+        if tipo in fraq: dano *= 2
+
 class Personagem(Criatura):
     def __init__(obj, nome, raca, classe, nvl=1):
         super().__init__(nome)
@@ -145,7 +150,6 @@ class Arma(Item):
             case __:
                 bonAt = "FOR"
         obj.codatk = Ataque(obj.nome, dano, tipo, bonAt).cod
-
     
     def adiItem(obj, perso):
         super().adiItem(perso)
@@ -198,7 +202,7 @@ class Ataque:
         elif b < 0:
             b = str(b)
         
-        return f"{obj.qtdado}d{obj.dado}{b if b != 0 else ""}"
+        return f"{obj.qtdado}d{obj.dado}{b if b != 0 else ''}"
 
     def __str__(obj):
         if obj.bonus > 0: bon = '+'+str(obj.bonus)+'atrbon'
@@ -206,11 +210,55 @@ class Ataque:
         return f"O ataque '{obj.nome}' dá {obj.qtdado}d{obj.dado}{bon} de dano {obj.tipo}"
 
 class Magia:
-    def __init__(obj, nome, nvlMin, dist, dano):
+    def __init__(obj, nome, classe, desc, nvlMin=0, dist=0, alvos="1 pessoa"):
         obj.nome = nome
-        obj.nvlMin = nvlMin
+        obj.classe = classe #Em qual lista de classe a magia está
+        obj.desc = desc
+        obj.nvlMin = nvlMin #"0" significa truque
+        obj.dist = dist #Em metros. '0' significa "ao toque"
+        obj.alvos = alvos
+        obj.perso = None
+        magias.append(obj)
+        obj.cod = len(magias)
+
+    def adiMagia(obj, perso):
+        try:
+            perso.magiasProntas.append(obj.cod)
+            obj.perso = perso.cod
+        except:
+            print("O personagem não pertence a uma classe conjuradora!")
         
+    def perdeMagia(obj, perso):
+        try:
+            if obj.cod in perso.magiasProntas:
+                perso.magiasProntas.remove(obj.cod)
+            else:
+                print("Esse personagem não tem essa magia")
+        except:
+            print("O personagem não pertence a uma classe conjuradora!")
+
+    def afetarAlvo(obj, alvo):
+        pass
+
+class MagiaDeAtaque(Magia):
+    def __init__(obj, nome, desc, dano, tipo, nvlMin=0, dist=0, alvos="1 pessoa"):
+        super().__init__(nome, desc, nvlMin, dist, alvos)
+        obj.dano = dano
+        obj.tipo = tipo #Tipo de dano
+        obj.codatk = Ataque(obj.nome, obj.dano, obj.tipo, melee=(dist==0)).cod
+
+    def adiMagia(obj, perso):
+        super().adiMagia(perso)
+        try:
+            perso.magiasProntas[0]
+            perso.ataques.append(obj.codatk)
+        except:
+            pass
+
 def retornaObj(cod, lista):
     for e in lista:
         if e.cod == cod:
             return e
+
+link = Personagem("Link", "Elfo", "Guerreiro")
+Magia("Explosão Solar", "Clérigo", "Uma literal explosão de puro poder estelar").adiMagia(link)
